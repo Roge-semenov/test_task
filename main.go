@@ -1,5 +1,6 @@
 package main
 
+//editional push
 import (
 	"bufio"
 	"flag"
@@ -27,7 +28,7 @@ func main() {
 	flag.Parse()
 
 	if (*count && *duplicate) || (*count && *unique) || (*duplicate && *unique) {
-		fmt.Println("Флаги -c, -d, и -u не могут быть использованы вместе.")
+		fmt.Println("Флаги -c, -d, и -u не могут быть использованы вместе. ")
 		return
 	}
 
@@ -102,4 +103,7 @@ func ignoreNFields(s string, n int) string {
 		return ""
 	}
 	return strings.Join(fields[n:], " ")
+}
+func newFunc() {
+	fmt.Println("uu")
 }
