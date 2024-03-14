@@ -104,6 +104,3 @@ func ignoreNFields(s string, n int) string {
 	}
 	return strings.Join(fields[n:], " ")
 }
-func newFunc() {
-	fmt.Println("uu")
-}
