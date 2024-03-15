@@ -1,22 +1,18 @@
 package main
 
-//editional push
 import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
 
 func main() {
-	var lines []string
 
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		line := scanner.Text()
-		lines = append(lines, line)
-	}
+	inputFilePath := flag.String("input", "", "Файл ввода (оставьте пустым для stdin)")
+	outputFilePath := flag.String("output", "", "Файл вывода (оставьте пустым для stdout)")
 
 	count := flag.Bool("c", false, "подсчитать количество встречаний строки")
 	duplicate := flag.Bool("d", false, "вывести повторяющиеся строки")
@@ -32,18 +28,49 @@ func main() {
 		return
 	}
 
-	if !(*count || *unique || *duplicate) {
-		printUniqueLines(lines, *numFields, *numChars, *ignoreCase)
-	} else if *count {
-		removeDuplicates(lines, "c", *numFields, *numChars, *ignoreCase)
-	} else if *duplicate {
-		removeDuplicates(lines, "d", *numFields, *numChars, *ignoreCase)
-	} else if *unique {
-		removeDuplicates(lines, "u", *numFields, *numChars, *ignoreCase)
-	} //тут наверное не получится switch
+	var reader io.Reader = os.Stdin
+	var writer io.Writer = os.Stdout
+
+	if *inputFilePath != "" {
+		file, err := os.Open(*inputFilePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Ошибка при открытии файла ввода: %v\n", err)
+			return
+		}
+		defer file.Close()
+		reader = file
+	}
+
+	if *outputFilePath != "" {
+		file, err := os.Create(*outputFilePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Ошибка при создании файла вывода: %v\n", err)
+			return
+		}
+		defer file.Close()
+		writer = file
+	}
+
+	scanner := bufio.NewScanner(reader)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	switch {
+	case *count:
+		removeDuplicates(writer, lines, "c", *numFields, *numChars, *ignoreCase)
+	case *duplicate:
+		removeDuplicates(writer, lines, "d", *numFields, *numChars, *ignoreCase)
+	case *unique:
+		removeDuplicates(writer, lines, "u", *numFields, *numChars, *ignoreCase)
+	default:
+		printUniqueLines(writer, lines, *numFields, *numChars, *ignoreCase)
+	}
+
 }
 
-func printUniqueLines(lines []string, nf int, nC int, iC bool) {
+func printUniqueLines(writer io.Writer, lines []string, nf int, nC int, iC bool) {
 	result := []string{lines[0]}
 	for i := 1; i < len(lines); i++ {
 		s1 := ignoreNFields(lines[i], nf)
@@ -60,10 +87,10 @@ func printUniqueLines(lines []string, nf int, nC int, iC bool) {
 		}
 	}
 	for _, line := range result {
-		fmt.Println(line)
+		fmt.Fprintln(writer, line)
 	}
 }
-func removeDuplicates(lines []string, mode string, nf int, nC int, iC bool) {
+func removeDuplicates(writer io.Writer, lines []string, mode string, nf int, nC int, iC bool) {
 	c := 1
 	for i := 1; i < len(lines); i++ {
 		s1 := ignoreNFields(lines[i], nf)
@@ -78,22 +105,22 @@ func removeDuplicates(lines []string, mode string, nf int, nC int, iC bool) {
 		if s1[nC:] == s2[nC:] {
 			c += 1
 		} else {
-			printStringscount(c, lines[i-1], mode)
+			printStringscount(writer, c, lines[i-1], mode)
 			c = 1
 		}
 	}
-	printStringscount(c, lines[len(lines)-1], mode)
+	printStringscount(writer, c, lines[len(lines)-1], mode)
 }
-func printStringscount(c int, str1 string, mode string) {
+func printStringscount(writer io.Writer, c int, str1 string, mode string) {
 	if mode == "c" {
-		fmt.Println(c, str1)
+		fmt.Fprintln(writer, c, str1)
 	} else if mode == "d" {
 		if c > 1 {
-			fmt.Println(str1)
+			fmt.Fprintln(writer, str1)
 		}
 	} else {
 		if c == 1 {
-			fmt.Println(str1)
+			fmt.Fprintln(writer, str1)
 		}
 	}
 }
